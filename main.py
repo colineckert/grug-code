@@ -5,7 +5,7 @@ from google import genai
 from google.genai import types
 
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions, call_function
 
 
 def main():
@@ -46,8 +46,13 @@ def generate_content(client, messages, verbose=False):
     if len(response.function_calls) > 0:
         print("Function calls:")
         for function_call in response.function_calls:
-            print(f"Calling function: {
-                  function_call.name}({function_call.args})")
+            function_call_result = call_function(function_call, verbose)
+            if function_call_result.parts and function_call_result.parts[0].function_response and function_call_result.parts[0].function_response.response:
+                if verbose:
+                    print(
+                        f"-> {function_call_result.parts[0].function_response.response}")
+            else:
+                raise Exception(f"Function {function_call.name} failed")
     if verbose:
         print("User prompt:", messages[0].parts[0].text)
         print("Prompt tokens:", response.usage_metadata.prompt_token_count)
